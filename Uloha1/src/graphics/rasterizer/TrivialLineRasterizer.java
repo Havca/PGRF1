@@ -14,13 +14,17 @@ public class TrivialLineRasterizer implements LineRasterizer {
 
   @Override 
   public void rasterize(Line line) {
-    rasterize(
+    
+    if(line != null && line.getPoint1() != null && line.getPoint2() != null)
+    {
+      rasterize(
       line.getPoint1().getX(), 
       line.getPoint1().getY(), 
       line.getPoint2().getX(), 
       line.getPoint2().getY(), 
       line.getColor()
     );
+    } 
 
   }
 
