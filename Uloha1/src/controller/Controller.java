@@ -35,6 +35,7 @@ public class Controller {
     private final List<Line> lines = new ArrayList<Line>();
     private final List<Polygon> polygons = new ArrayList<Polygon>();
     private final Polygon p = new Polygon();
+    private boolean editMode = false;
 
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
@@ -58,6 +59,16 @@ public class Controller {
                     lines.clear();
                     canvas.clear();
                     canvas.repaint();
+                    startPointDrag = null;
+                    currentPointDrag = null;
+                    startPoint = null;
+                    currentPoint = null;
+                    lastPoint = null;
+                    polygons.clear();
+                }
+
+                if(e.getKeyCode() == KeyEvent.VK_E) {
+                    editMode = !editMode;
                 }
             }
         });
@@ -65,7 +76,7 @@ public class Controller {
         
 
         canvas.addMouseListener(new MouseAdapter(){
-            /*@Override 
+            @Override 
             public void mousePressed(MouseEvent e)
             {
                 startPointDrag = new Point(e.getX(), e.getY());
@@ -75,52 +86,61 @@ public class Controller {
             @Override 
             public void mouseReleased(MouseEvent e)
             {
-                lines.add(new Line(startPoint, getPoint(e), LINE_COLOR));
+                lines.add(new Line(startPointDrag, getPoint(e), LINE_COLOR));
                 currentPointDrag = null;
                 startPointDrag = null;
                 render();
-            }*/
+            }
 
             //---------------------------Polygon point detection---------------------------
             @Override
             public void mouseClicked(MouseEvent e)
             {
-                if(startPoint == null)
+                if(editMode)
                 {
-                    startPoint = getPoint(e);
-                    currentPoint = getPoint(e);
-                    lastPoint = getPoint(e);
+                    Point overlappingPoint = checkPointsOverlapping(getPoint(e));
                     
-                    p.addPoint(startPoint);
                 }
                 else
                 {
-                    lastPoint = currentPoint;
-                    currentPoint = getPoint(e);
-                    p.addPoint(currentPoint);
-                    
-                    if(pointsOverlapping(startPoint, currentPoint))
+                    if(startPoint == null)
                     {
-                        lines.add(new Line(lastPoint, startPoint, LINE_COLOR));
-                        currentPoint = null;
-                        startPoint = null;
-                        lastPoint = null;
-                        polygons.add(p);
-                        p.clearPoints();
+                        
+                        startPoint = getPoint(e);
+                        currentPoint = getPoint(e);
+                        lastPoint = getPoint(e);
+                        p.addPoint(startPoint);
                     }
                     else
                     {
-                        lines.add(new Line(lastPoint, currentPoint, LINE_COLOR));
+                        lastPoint = currentPoint;
+                        currentPoint = getPoint(e);
+                        p.addPoint(currentPoint);
+                        
+                        if(pointsOverlapping(startPoint, currentPoint))
+                        {
+                            lines.add(new Line(lastPoint, startPoint, LINE_COLOR));
+                            currentPoint = null;
+                            startPoint = null;
+                            lastPoint = null;
+                            polygons.add(p);
+                            p.clearPoints();
+                        }
+                        else
+                        {
+                            lines.add(new Line(lastPoint, currentPoint, LINE_COLOR));
+                        }
+                        render();
                     }
-                    render();
                 }
+                
             }
 
             
         }); 
 
         canvas.addMouseMotionListener(new MouseAdapter(){
-            /*@Override 
+            @Override 
             public void mouseDragged(MouseEvent e)
             {
                 canvas.clear();
@@ -129,7 +149,7 @@ public class Controller {
                 raster.rasterize(new Line(startPointDrag, currentPointDrag, PREVIEW_COLOR));
                 canvas.repaint();
                 
-            }*/
+            }
 
             @Override 
             public void mouseMoved(MouseEvent e)
@@ -164,6 +184,23 @@ public class Controller {
     private boolean pointsOverlapping(Point p1, Point p2)
     {
         return Math.abs(p1.getX() - p2.getX()) < 10 && Math.abs(p1.getY() - p2.getY()) < 10;
+    }
+
+    private Point checkPointsOverlapping(Point p)
+    {
+        for(Line line : lines)
+        {
+            if(pointsOverlapping(p, line.getPoint1()))
+            {
+                return line.getPoint1();
+            }
+
+            if(pointsOverlapping(p, line.getPoint2()))
+            {
+                return line.getPoint2();
+            }
+        }
+        return null;
     }
     
 
