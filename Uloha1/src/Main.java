@@ -16,7 +16,7 @@ public class Main {
 
     public static void main(String[] args) {
         invokeLater(() -> {
-            Window window = new Window(800, 600);
+            Window window = new Window(1600, 1200);
             new Controller(window.getCanvas()).init();
         });
     }
