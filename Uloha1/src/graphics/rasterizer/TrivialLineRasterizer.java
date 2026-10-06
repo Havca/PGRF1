@@ -62,6 +62,7 @@ public class TrivialLineRasterizer implements LineRasterizer {
       {
         raster.setPixel(x1, y, color);
       }
+      return;
     }
 
     int dominantniOsa = Math.abs(deltaX) >= Math.abs(deltaY) ? 0 : 1; //pro osu x je hodnota 0, pro y 1
@@ -107,66 +108,6 @@ public class TrivialLineRasterizer implements LineRasterizer {
         int x = Math.round((y - q) / k);
         raster.setPixel(x, y, color);
       }
-    }
-
-
-
-
-      
-
-    /*if(x1 > x2)
-    {
-      int tempX = x1;
-      int tempY = y1;
-      x1 = x2;
-      y1 = y2;
-      x2 = tempX;
-      y2 = tempY;
-    }
-
-    
-    
-    
-
-    // (x2 - x1) / (y2 - y1)  > 
-
-    if(x1 == x2)
-    {
-      for(int y = Math.min(y1, y2); y < Math.max(y1, y2); y++)
-      {
-        raster.setPixel(x1, y, color);
-      }
-    }
-    else if(Math.tan((x2-x1) / (float)(y2-y1)) > 1) //podle y
-    {
-      float k = (y2 - y1) / (float)(x2 - x1);
-
-      float q = y1 - k * x1;
-
-      for(int y = y1; y <= y2; y++)
-      {
-        float x = (y - q) / k;
-        raster.setPixel(Math.round(x), y, color);
-      }
-    }
-    else //podle x
-    {
-      float k = (y2 - y1) / (float)(x2 - x1);
-
-      float q = y1 - k * x1;
-
-      for(int x = x1; x <= x2; x++)
-      {
-        float y = k * x + q;
-        raster.setPixel(x, Math.round(y), color);
-      }
-    }*/
-
-
-    
-    //TODO: x2 == x1 (verical line) 
-    //TODO: x1 vlevo a x2 vpravo (x1 < x2), naopak nefunguje
-    //TODO:     pokud je y2 - y1 > x2 - x1, tak to nefunguje (strma cara)
-    
+    }    
   }
 }

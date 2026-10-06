@@ -26,16 +26,21 @@ public class Controller {
     private final LineRasterizer raster;
     private Point startPointDrag = null;
     private Point currentPointDrag = null;
+
     private Point startPoint = null;
     private Point lastPoint = null;
     private Point currentPoint = null;
     private Point trackerPoint = null;
+
     private final int LINE_COLOR = Color.WHITE.getRGB();
     private final int PREVIEW_COLOR = Color.RED.getRGB();
     private final List<Line> lines = new ArrayList<Line>();
     private final List<Polygon> polygons = new ArrayList<Polygon>();
-    private final Polygon p = new Polygon();
+    private Polygon currentPolygon = new Polygon();
+
     private boolean editMode = false;
+    private int indexOfEditedPoint = -1;
+    private Polygon selectedPolygon = null;
 
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
@@ -65,71 +70,109 @@ public class Controller {
                     currentPoint = null;
                     lastPoint = null;
                     polygons.clear();
+                    currentPolygon = new Polygon();
                 }
 
                 if(e.getKeyCode() == KeyEvent.VK_E) {
                     editMode = !editMode;
                 }
+
+                if(e.getKeyCode() == KeyEvent.VK_T) {
+                    Polygon p = new Polygon();
+                    p.addPoint(new Point(50, 50));
+                    p.addPoint(new Point(50, 100));
+                    p.addPoint(new Point(100, 100));
+                    p.addPoint(new Point(100, 50));
+                    polygons.add(p);
+                    render();
+                }
+                    
             }
         });
-
-        
 
         canvas.addMouseListener(new MouseAdapter(){
             @Override 
             public void mousePressed(MouseEvent e)
             {
-                startPointDrag = new Point(e.getX(), e.getY());
-                currentPointDrag = new Point(e.getX(), e.getY());
+                if(editMode)
+                {
+                    var overlappingPoint = checkPointsOverlapping(getPoint(e));
+                    if(overlappingPoint == null) return;
+                    selectedPolygon = overlappingPoint.first();
+                    Point selectedPoint = overlappingPoint.second();
+                    var selectedPolygonsPoints = selectedPolygon.getPoints();
+                    indexOfEditedPoint = selectedPolygonsPoints.indexOf(selectedPoint);
+                    //Point previousPoint = selectedPolygonsPoints.get(indexOfEditedPoint - 1 < 0 ? selectedPolygonsPoints.size() - 1 : indexOfEditedPoint - 1);
+                    //Point nextPoint = selectedPolygonsPoints.get((indexOfEditedPoint + 1) % selectedPolygonsPoints.size());
+
+  
+                }
+                else
+                {
+                    startPointDrag = new Point(e.getX(), e.getY());
+                    currentPointDrag = new Point(e.getX(), e.getY());
+                }
+                
             }
 
             @Override 
             public void mouseReleased(MouseEvent e)
             {
-                lines.add(new Line(startPointDrag, getPoint(e), LINE_COLOR));
-                currentPointDrag = null;
-                startPointDrag = null;
-                render();
+                if(editMode)
+                {
+                    selectedPolygon = null;
+                    indexOfEditedPoint = -1;
+                }
+                else if(startPointDrag == null || currentPointDrag == null)
+                {
+                    return;
+                }
+                else
+                {
+                    lines.add(new Line(startPointDrag, getPoint(e), LINE_COLOR));
+                    currentPointDrag = null;
+                    startPointDrag = null;
+                    render();
+                }
+                
             }
 
             //---------------------------Polygon point detection---------------------------
             @Override
             public void mouseClicked(MouseEvent e)
             {
-                if(editMode)
-                {
-                    Point overlappingPoint = checkPointsOverlapping(getPoint(e));
-                    
-                }
-                else
-                {
+      
+                if(!editMode)
+                {    
                     if(startPoint == null)
                     {
                         
                         startPoint = getPoint(e);
                         currentPoint = getPoint(e);
                         lastPoint = getPoint(e);
-                        p.addPoint(startPoint);
+                        currentPolygon.addPoint(startPoint);
                     }
                     else
                     {
                         lastPoint = currentPoint;
                         currentPoint = getPoint(e);
-                        p.addPoint(currentPoint);
+                        
                         
                         if(pointsOverlapping(startPoint, currentPoint))
                         {
-                            lines.add(new Line(lastPoint, startPoint, LINE_COLOR));
                             currentPoint = null;
                             startPoint = null;
                             lastPoint = null;
-                            polygons.add(p);
-                            p.clearPoints();
+                            polygons.add(currentPolygon);
+                            System.out.println("Polygon added: " + currentPolygon);
+                            currentPolygon = new Polygon();
                         }
                         else
                         {
-                            lines.add(new Line(lastPoint, currentPoint, LINE_COLOR));
+                            currentPolygon.addPoint(currentPoint);
                         }
+                        
+
                         render();
                     }
                 }
@@ -143,11 +186,25 @@ public class Controller {
             @Override 
             public void mouseDragged(MouseEvent e)
             {
-                canvas.clear();
-                render();
-                currentPointDrag = getPoint(e);
-                raster.rasterize(new Line(startPointDrag, currentPointDrag, PREVIEW_COLOR));
-                canvas.repaint();
+                if(editMode)
+                {
+                    currentPointDrag = getPoint(e);
+                    if(selectedPolygon != null && indexOfEditedPoint != -1)
+                    {
+                        selectedPolygon.getPoints().set(indexOfEditedPoint, currentPointDrag);
+                        render();
+                    }
+
+                }
+                else
+                {
+                    canvas.clear();
+                    render();
+                    currentPointDrag = getPoint(e);
+                    raster.rasterize(new Line(startPointDrag, currentPointDrag, PREVIEW_COLOR));
+                    canvas.repaint();
+                }
+                
                 
             }
 
@@ -169,39 +226,65 @@ public class Controller {
         canvas.repaint();
     }
 
+    ///-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Helper functions -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     private Point getPoint(MouseEvent e) {
         return new Point(e.getX(), e.getY());
     }
 
+    //----------------------------Rendering----------------------------
     private void render() {
         canvas.clear();
         for(Line line : lines) {
             raster.rasterize(line);
         }
+
+
+        for(Polygon p : polygons)
+        {
+            ArrayList<Point> points = p.getPoints();
+            int size = points.size();
+            for(int i = 0; i < size; i++)
+            {
+                raster.rasterize(new Line(points.get(i), points.get((i+1) % size), LINE_COLOR));
+            }
+        }
+
+        if(currentPolygon.getPoints().size() > 0)
+        {
+            ArrayList<Point> points = currentPolygon.getPoints();
+            int size = points.size();
+            for(int i = 0; i < size - 1; i++)
+            {
+                raster.rasterize(new Line(points.get(i), points.get((i+1) % size) , LINE_COLOR));
+            }
+        }
         canvas.repaint();
     }
 
+    //----------------------------Point overlapping detection----------------------------
     private boolean pointsOverlapping(Point p1, Point p2)
     {
         return Math.abs(p1.getX() - p2.getX()) < 10 && Math.abs(p1.getY() - p2.getY()) < 10;
     }
-
-    private Point checkPointsOverlapping(Point p)
+    
+    //----------------------------Point overlapping detection for polygons----------------------------
+    private Pair<Polygon, Point> checkPointsOverlapping(Point p)
     {
-        for(Line line : lines)
+        for(Polygon pol : polygons)
         {
-            if(pointsOverlapping(p, line.getPoint1()))
+            for(Point polP : pol.getPoints())
             {
-                return line.getPoint1();
-            }
-
-            if(pointsOverlapping(p, line.getPoint2()))
-            {
-                return line.getPoint2();
+                if(pointsOverlapping(polP, p))
+                {
+                    return new Pair<Polygon, Point>(pol, polP);
+                }
             }
         }
+        
         return null;
     }
+
+    public record Pair<F, S>(F first, S second) {} //std::pair copy
     
 
 }
