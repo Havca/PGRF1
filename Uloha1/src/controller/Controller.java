@@ -5,14 +5,20 @@ import view.Canvas;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
+
+import javax.swing.BorderFactory;
 
 import graphics.rasterizer.LineRasterizer;
 import graphics.rasterizer.TrivialLineRasterizer;
 import model.Line;
 import model.Point;
 import model.Polygon;
+import enums.EObjectType;
 
 import java.awt.Color;
+import javax.swing.BorderFactory;
+
 /**
  * Handles user input and controls the application flow related to the {@link Canvas}.
  * The controller coordinates input events, canvas operations, and rendering updates.
@@ -24,23 +30,32 @@ public class Controller {
 
     private final Canvas canvas;
     private final LineRasterizer raster;
+
+    //Line drawing variables
     private Point startPointDrag = null;
     private Point currentPointDrag = null;
+    private boolean lineDrag = false;
 
+    //Polygon drawing variables
     private Point startPoint = null;
-    private Point lastPoint = null;
     private Point currentPoint = null;
     private Point trackerPoint = null;
-
-    private final int LINE_COLOR = Color.WHITE.getRGB();
-    private final int PREVIEW_COLOR = Color.RED.getRGB();
-    private final List<Line> lines = new ArrayList<Line>();
-    private final List<Polygon> polygons = new ArrayList<Polygon>();
     private Polygon currentPolygon = new Polygon();
 
+    //Colors
+    private final int LINE_COLOR = Color.WHITE.getRGB();
+    private final int PREVIEW_COLOR = Color.RED.getRGB();
+
+    //Data structures for lines and polygons
+    private final List<Line> lines = new ArrayList<Line>();
+    private final List<Polygon> polygons = new ArrayList<Polygon>();
+
+    
+    //Edit mode variables
     private boolean editMode = false;
     private int indexOfEditedPoint = -1;
     private Polygon selectedPolygon = null;
+    private final Stack<EObjectType> objectTypes = new Stack<EObjectType>();
 
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
@@ -60,6 +75,7 @@ public class Controller {
             @Override 
             public void keyPressed(KeyEvent e)
             {
+                //---------------------------Clear---------------------------
                 if(e.getKeyCode() == KeyEvent.VK_C) {
                     lines.clear();
                     canvas.clear();
@@ -68,22 +84,52 @@ public class Controller {
                     currentPointDrag = null;
                     startPoint = null;
                     currentPoint = null;
-                    lastPoint = null;
                     polygons.clear();
                     currentPolygon = new Polygon();
                 }
 
+                //---------------------------Edit Mode---------------------------
                 if(e.getKeyCode() == KeyEvent.VK_E) {
                     editMode = !editMode;
+                    if (editMode) { //AI
+                        var editBorder = BorderFactory.createTitledBorder(
+                            BorderFactory.createLineBorder(Color.ORANGE, 2),
+                            "EDIT MODE");
+                        editBorder.setTitleColor(Color.ORANGE);
+                        canvas.setBorder(editBorder);
+                    } else {
+                        canvas.setBorder(null);
+                    }
+                    
                 }
 
-                if(e.getKeyCode() == KeyEvent.VK_T) {
-                    Polygon p = new Polygon();
-                    p.addPoint(new Point(50, 50));
-                    p.addPoint(new Point(50, 100));
-                    p.addPoint(new Point(100, 100));
-                    p.addPoint(new Point(100, 50));
-                    polygons.add(p);
+                ////---------------------------Remove last object---------------------------
+                if(e.getKeyCode() == KeyEvent.VK_Z) {
+                    if(polygons.isEmpty()) return;
+                    EObjectType latest = objectTypes.peek();
+                    switch(latest)
+                    {
+                        case null: {
+                            return;
+                        }
+                        case LINE: 
+                            if(lines.size() > 0)
+                            {
+                                lines.remove(lines.size() - 1);
+                                objectTypes.pop();
+                            }      
+                            break;
+                    
+
+                        case POLYGON: 
+                            if(polygons.size() > 0 ) 
+                            {
+                                polygons.remove(polygons.size() - 1);
+                                objectTypes.pop();
+                            }    
+                            break;
+                        
+                    } 
                     render();
                 }
                     
@@ -102,10 +148,6 @@ public class Controller {
                     Point selectedPoint = overlappingPoint.second();
                     var selectedPolygonsPoints = selectedPolygon.getPoints();
                     indexOfEditedPoint = selectedPolygonsPoints.indexOf(selectedPoint);
-                    //Point previousPoint = selectedPolygonsPoints.get(indexOfEditedPoint - 1 < 0 ? selectedPolygonsPoints.size() - 1 : indexOfEditedPoint - 1);
-                    //Point nextPoint = selectedPolygonsPoints.get((indexOfEditedPoint + 1) % selectedPolygonsPoints.size());
-
-  
                 }
                 else
                 {
@@ -127,11 +169,13 @@ public class Controller {
                 {
                     return;
                 }
-                else
+                else if(lineDrag)
                 {
                     lines.add(new Line(startPointDrag, getPoint(e), LINE_COLOR));
+                    objectTypes.push(EObjectType.LINE);
                     currentPointDrag = null;
                     startPointDrag = null;
+                    lineDrag = false;
                     render();
                 }
                 
@@ -149,12 +193,10 @@ public class Controller {
                         
                         startPoint = getPoint(e);
                         currentPoint = getPoint(e);
-                        lastPoint = getPoint(e);
                         currentPolygon.addPoint(startPoint);
                     }
                     else
                     {
-                        lastPoint = currentPoint;
                         currentPoint = getPoint(e);
                         
                         
@@ -162,9 +204,9 @@ public class Controller {
                         {
                             currentPoint = null;
                             startPoint = null;
-                            lastPoint = null;
                             polygons.add(currentPolygon);
-                            System.out.println("Polygon added: " + currentPolygon);
+                            objectTypes.push(EObjectType.POLYGON);
+                            //System.out.println("Polygon added: " + currentPolygon);
                             currentPolygon = new Polygon();
                         }
                         else
@@ -200,6 +242,7 @@ public class Controller {
                 {
                     canvas.clear();
                     render();
+                    lineDrag = true;
                     currentPointDrag = getPoint(e);
                     raster.rasterize(new Line(startPointDrag, currentPointDrag, PREVIEW_COLOR));
                     canvas.repaint();
@@ -211,7 +254,6 @@ public class Controller {
             @Override 
             public void mouseMoved(MouseEvent e)
             {
-                canvas.clear();
                 render();
                 trackerPoint = getPoint(e);
                 raster.rasterize(new Line(currentPoint, trackerPoint, PREVIEW_COLOR));
@@ -249,7 +291,7 @@ public class Controller {
             }
         }
 
-        if(currentPolygon.getPoints().size() > 0)
+        if(currentPolygon.getPoints().size() > 1)
         {
             ArrayList<Point> points = currentPolygon.getPoints();
             int size = points.size();

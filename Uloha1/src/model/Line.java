@@ -1,5 +1,6 @@
 package model;
 
+
 public class Line {
   private Point point1;
   private Point point2;
