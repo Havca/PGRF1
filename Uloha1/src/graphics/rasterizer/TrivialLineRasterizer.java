@@ -25,10 +25,10 @@ public class TrivialLineRasterizer implements LineRasterizer {
       line.getColor()
     );
     } 
-
   }
 
-  private void rasterize(int x1, int y1, int x2, int y2, int color) {
+  //----------------------------------------Trivial line rasterize algorithm-----------------------------------
+  private void rasterize(int x1, int y1, int x2, int y2, int color) { 
 
     if(x1 < 0 || x1 >= raster.getWidth() || y1 < 0 || y1 >= raster.getHeight()) {
       throw new IllegalArgumentException("Pixel coordinates out of bounds: (" + x1 + ", " + y1 + ")");

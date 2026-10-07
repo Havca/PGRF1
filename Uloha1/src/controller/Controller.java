@@ -1,14 +1,7 @@
 package controller;
 
+//Object import
 import view.Canvas;
-
-import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
-
-import javax.swing.BorderFactory;
-
 import graphics.rasterizer.LineRasterizer;
 import graphics.rasterizer.TrivialLineRasterizer;
 import model.Line;
@@ -16,18 +9,24 @@ import model.Point;
 import model.Polygon;
 import enums.EObjectType;
 
+//Library import
+import java.awt.event.*;
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
 import javax.swing.BorderFactory;
+
 
 /**
  * Handles user input and controls the application flow related to the {@link Canvas}.
  * The controller coordinates input events, canvas operations, and rendering updates.
  *
- * @author PGRF FIM UHK
+ * @author Ondrej Havelka
  * @version 2026
  */
 public class Controller {
-
+    //App parts variables
     private final Canvas canvas;
     private final LineRasterizer raster;
 
@@ -50,7 +49,6 @@ public class Controller {
     private final List<Line> lines = new ArrayList<Line>();
     private final List<Polygon> polygons = new ArrayList<Polygon>();
 
-    
     //Edit mode variables
     private boolean editMode = false;
     private int indexOfEditedPoint = -1;
@@ -70,7 +68,6 @@ public class Controller {
     public void init() {
         canvas.clear();
 
-        //---------------------------Clear---------------------------
         canvas.addKeyListener(new KeyAdapter() {
             @Override 
             public void keyPressed(KeyEvent e)
@@ -78,13 +75,13 @@ public class Controller {
                 //---------------------------Clear---------------------------
                 if(e.getKeyCode() == KeyEvent.VK_C) {
                     lines.clear();
+                    polygons.clear();
                     canvas.clear();
                     canvas.repaint();
                     startPointDrag = null;
                     currentPointDrag = null;
                     startPoint = null;
                     currentPoint = null;
-                    polygons.clear();
                     currentPolygon = new Polygon();
                 }
 
@@ -132,11 +129,12 @@ public class Controller {
                     } 
                     render();
                 }
-                    
             }
         });
 
+        //-------------------------------------------------Mouse listeners----------------------------------------------
         canvas.addMouseListener(new MouseAdapter(){
+            //Used for line drawing or vertex moving
             @Override 
             public void mousePressed(MouseEvent e)
             {
@@ -154,9 +152,9 @@ public class Controller {
                     startPointDrag = new Point(e.getX(), e.getY());
                     currentPointDrag = new Point(e.getX(), e.getY());
                 }
-                
             }
 
+            //Used for line drawing or vertex moving
             @Override 
             public void mouseReleased(MouseEvent e)
             {
@@ -185,12 +183,10 @@ public class Controller {
             @Override
             public void mouseClicked(MouseEvent e)
             {
-      
                 if(!editMode)
                 {    
                     if(startPoint == null)
                     {
-                        
                         startPoint = getPoint(e);
                         currentPoint = getPoint(e);
                         currentPolygon.addPoint(startPoint);
@@ -198,32 +194,25 @@ public class Controller {
                     else
                     {
                         currentPoint = getPoint(e);
-                        
-                        
                         if(pointsOverlapping(startPoint, currentPoint))
                         {
                             currentPoint = null;
                             startPoint = null;
                             polygons.add(currentPolygon);
                             objectTypes.push(EObjectType.POLYGON);
-                            //System.out.println("Polygon added: " + currentPolygon);
                             currentPolygon = new Polygon();
                         }
                         else
                         {
                             currentPolygon.addPoint(currentPoint);
                         }
-                        
-
                         render();
                     }
                 }
-                
             }
-
-            
         }); 
 
+        //-------------------------------------------------Mouse motion listeners----------------------------------------------
         canvas.addMouseMotionListener(new MouseAdapter(){
             @Override 
             public void mouseDragged(MouseEvent e)
@@ -236,7 +225,6 @@ public class Controller {
                         selectedPolygon.getPoints().set(indexOfEditedPoint, currentPointDrag);
                         render();
                     }
-
                 }
                 else
                 {
@@ -247,8 +235,6 @@ public class Controller {
                     raster.rasterize(new Line(startPointDrag, currentPointDrag, PREVIEW_COLOR));
                     canvas.repaint();
                 }
-                
-                
             }
 
             @Override 
@@ -259,12 +245,9 @@ public class Controller {
                 raster.rasterize(new Line(currentPoint, trackerPoint, PREVIEW_COLOR));
                 raster.rasterize(new Line(trackerPoint, startPoint, PREVIEW_COLOR));
                 canvas.repaint();
-
-
             }
         });
 
-        
         canvas.repaint();
     }
 
@@ -276,11 +259,12 @@ public class Controller {
     //----------------------------Rendering----------------------------
     private void render() {
         canvas.clear();
+        //Draw all lines
         for(Line line : lines) {
             raster.rasterize(line);
         }
 
-
+        //Draw all closed polygons
         for(Polygon p : polygons)
         {
             ArrayList<Point> points = p.getPoints();
@@ -291,6 +275,7 @@ public class Controller {
             }
         }
 
+        //Draw current open polygon
         if(currentPolygon.getPoints().size() > 1)
         {
             ArrayList<Point> points = currentPolygon.getPoints();
@@ -304,6 +289,7 @@ public class Controller {
     }
 
     //----------------------------Point overlapping detection----------------------------
+    //Margin 10 units for click
     private boolean pointsOverlapping(Point p1, Point p2)
     {
         return Math.abs(p1.getX() - p2.getX()) < 10 && Math.abs(p1.getY() - p2.getY()) < 10;
@@ -322,7 +308,6 @@ public class Controller {
                 }
             }
         }
-        
         return null;
     }
 
