@@ -3,19 +3,19 @@ package controller;
 //Object import
 import view.Canvas;
 import graphics.rasterizer.LineRasterizer;
-import graphics.rasterizer.TrivialLineRasterizer;
+import graphics.rasterizer.BresenhamsAlgorithm;
+//import graphics.rasterizer.TrivialLineRasterizer;
 import model.Line;
 import model.Point;
 import model.Polygon;
-import enums.EObjectType;
 
 //Library import
 import java.awt.event.*;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 import javax.swing.BorderFactory;
+import javax.swing.SwingUtilities;
 
 
 /**
@@ -45,22 +45,22 @@ public class Controller {
     private final int LINE_COLOR = Color.WHITE.getRGB();
     private final int PREVIEW_COLOR = Color.RED.getRGB();
 
-    //Data structures for lines and polygons
-    private final List<Line> lines = new ArrayList<Line>();
+    //Data structure for polygons
     private final List<Polygon> polygons = new ArrayList<Polygon>();
 
     //Edit mode variables
     private boolean editMode = false;
     private int indexOfEditedPoint = -1;
     private Polygon selectedPolygon = null;
-    private final Stack<EObjectType> objectTypes = new Stack<EObjectType>();
 
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
     public Controller(Canvas canvas) {
         this.canvas = canvas;
-        this.raster = new TrivialLineRasterizer(canvas.getRaster());
+        //this.raster = new TrivialLineRasterizer(canvas.getRaster());  ORIGINAL
+        this.raster = new BresenhamsAlgorithm(canvas.getRaster());
+
     }
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Main functions -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
@@ -74,7 +74,6 @@ public class Controller {
             {
                 //---------------------------Clear---------------------------
                 if(e.getKeyCode() == KeyEvent.VK_C) {
-                    lines.clear();
                     polygons.clear();
                     canvas.clear();
                     canvas.repaint();
@@ -88,6 +87,7 @@ public class Controller {
                 //---------------------------Edit Mode---------------------------
                 if(e.getKeyCode() == KeyEvent.VK_E) {
                     editMode = !editMode;
+                    trackerPoint = null;
                     if (editMode) { //AI
                         var editBorder = BorderFactory.createTitledBorder(
                             BorderFactory.createLineBorder(Color.ORANGE, 2),
@@ -97,36 +97,13 @@ public class Controller {
                     } else {
                         canvas.setBorder(null);
                     }
-                    
+                    render();
                 }
 
                 ////---------------------------Remove last object---------------------------
                 if(e.getKeyCode() == KeyEvent.VK_Z) {
                     if(polygons.isEmpty()) return;
-                    EObjectType latest = objectTypes.peek();
-                    switch(latest)
-                    {
-                        case null: {
-                            return;
-                        }
-                        case LINE: 
-                            if(lines.size() > 0)
-                            {
-                                lines.remove(lines.size() - 1);
-                                objectTypes.pop();
-                            }      
-                            break;
-                    
-
-                        case POLYGON: 
-                            if(polygons.size() > 0 ) 
-                            {
-                                polygons.remove(polygons.size() - 1);
-                                objectTypes.pop();
-                            }    
-                            break;
-                        
-                    } 
+                    polygons.remove(polygons.size() - 1);
                     render();
                 }
             }
@@ -169,8 +146,10 @@ public class Controller {
                 }
                 else if(lineDrag)
                 {
-                    lines.add(new Line(startPointDrag, getPoint(e), LINE_COLOR));
-                    objectTypes.push(EObjectType.LINE);
+                    Polygon p = new Polygon();
+                    p.addPoint(startPointDrag);
+                    p.addPoint(getPoint(e));
+                    polygons.add(p);
                     currentPointDrag = null;
                     startPointDrag = null;
                     lineDrag = false;
@@ -183,9 +162,29 @@ public class Controller {
             @Override
             public void mouseClicked(MouseEvent e)
             {
-                if(!editMode)
+                if(editMode)
+                {
+                    //Point deletion
+                    if(SwingUtilities.isRightMouseButton(e))
+                    {
+                        var overlappingPoint = checkPointsOverlapping(getPoint(e));
+                        if(overlappingPoint == null) return;
+                        selectedPolygon = overlappingPoint.first();
+                        Point selectedPoint = overlappingPoint.second();
+                        var selectedPolygonsPoints = selectedPolygon.getPoints();
+                        indexOfEditedPoint = selectedPolygonsPoints.indexOf(selectedPoint);
+                        if(selectedPolygon != null && indexOfEditedPoint != -1)
+                        {
+                            selectedPolygon.getPoints().remove(indexOfEditedPoint);
+                            
+                        }
+                    }
+                    render();
+                }
+                else
                 {    
-                    if(startPoint == null)
+                    
+                    if(startPoint == null) //Adding points to polygon
                     {
                         startPoint = getPoint(e);
                         currentPoint = getPoint(e);
@@ -194,15 +193,14 @@ public class Controller {
                     else
                     {
                         currentPoint = getPoint(e);
-                        if(pointsOverlapping(startPoint, currentPoint))
+                        if(pointsOverlapping(startPoint, currentPoint)) //Close polygon
                         {
                             currentPoint = null;
                             startPoint = null;
                             polygons.add(currentPolygon);
-                            objectTypes.push(EObjectType.POLYGON);
                             currentPolygon = new Polygon();
                         }
-                        else
+                        else //Continue adding points
                         {
                             currentPolygon.addPoint(currentPoint);
                         }
@@ -217,7 +215,7 @@ public class Controller {
             @Override 
             public void mouseDragged(MouseEvent e)
             {
-                if(editMode)
+                if(editMode) //Edit position of a point in a polygon
                 {
                     currentPointDrag = getPoint(e);
                     if(selectedPolygon != null && indexOfEditedPoint != -1)
@@ -226,7 +224,7 @@ public class Controller {
                         render();
                     }
                 }
-                else
+                else //Draw line
                 {
                     canvas.clear();
                     render();
@@ -240,7 +238,9 @@ public class Controller {
             @Override 
             public void mouseMoved(MouseEvent e)
             {
+                //Draw preview lines
                 render();
+                if(editMode) return;
                 trackerPoint = getPoint(e);
                 raster.rasterize(new Line(currentPoint, trackerPoint, PREVIEW_COLOR));
                 raster.rasterize(new Line(trackerPoint, startPoint, PREVIEW_COLOR));
@@ -259,10 +259,6 @@ public class Controller {
     //----------------------------Rendering----------------------------
     private void render() {
         canvas.clear();
-        //Draw all lines
-        for(Line line : lines) {
-            raster.rasterize(line);
-        }
 
         //Draw all closed polygons
         for(Polygon p : polygons)
