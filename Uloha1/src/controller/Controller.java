@@ -53,6 +53,9 @@ public class Controller {
     private int indexOfEditedPoint = -1;
     private Polygon selectedPolygon = null;
 
+    //Align mode variables
+    private boolean alignMode = false;
+
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
@@ -100,12 +103,20 @@ public class Controller {
                     render();
                 }
 
-                ////---------------------------Remove last object---------------------------
+                //---------------------------Remove last object---------------------------
                 if(e.getKeyCode() == KeyEvent.VK_Z) {
                     if(polygons.isEmpty()) return;
                     polygons.remove(polygons.size() - 1);
                     render();
                 }
+
+                //--------------------Straight, Vertical and Diagonal line-----------------
+                if(e.getKeyCode() == KeyEvent.VK_SHIFT) {
+                    alignMode = !alignMode;
+                    alignCurrentPoint();
+                    render();
+                }
+                    
             }
         });
 
@@ -126,6 +137,7 @@ public class Controller {
                 }
                 else
                 {
+                    
                     startPointDrag = new Point(e.getX(), e.getY());
                     currentPointDrag = new Point(e.getX(), e.getY());
                 }
@@ -135,6 +147,12 @@ public class Controller {
             @Override 
             public void mouseReleased(MouseEvent e)
             {
+                if(pointOutOfBounds(getPoint(e)))
+                {
+                    currentPointDrag = null;
+                    return;
+                }
+
                 if(editMode)
                 {
                     selectedPolygon = null;
@@ -148,7 +166,15 @@ public class Controller {
                 {
                     Polygon p = new Polygon();
                     p.addPoint(startPointDrag);
-                    p.addPoint(getPoint(e));
+                    if(alignMode)
+                    {
+                        p.addPoint(currentPointDrag);
+                    }
+                    else
+                    {
+                        p.addPoint(getPoint(e));
+                    }
+                    
                     polygons.add(p);
                     currentPointDrag = null;
                     startPointDrag = null;
@@ -215,6 +241,11 @@ public class Controller {
             @Override 
             public void mouseDragged(MouseEvent e)
             {
+                if(pointOutOfBounds(getPoint(e)))
+                {
+                    currentPointDrag = null;
+                    return;
+                }
                 if(editMode) //Edit position of a point in a polygon
                 {
                     currentPointDrag = getPoint(e);
@@ -230,6 +261,9 @@ public class Controller {
                     render();
                     lineDrag = true;
                     currentPointDrag = getPoint(e);
+                    if (alignMode) {
+                        alignCurrentPoint();
+                    }
                     raster.rasterize(new Line(startPointDrag, currentPointDrag, PREVIEW_COLOR));
                     canvas.repaint();
                 }
@@ -281,6 +315,12 @@ public class Controller {
                 raster.rasterize(new Line(points.get(i), points.get((i+1) % size) , LINE_COLOR));
             }
         }
+
+        //Draw current preview line
+        if(startPointDrag != null)
+        {
+            raster.rasterize(new Line(startPointDrag, currentPointDrag, PREVIEW_COLOR));
+        }
         canvas.repaint();
     }
 
@@ -305,6 +345,41 @@ public class Controller {
             }
         }
         return null;
+    }
+
+    //----------------------------Aligns currentPoint to one of 3 axes-------------------------------
+    private void alignCurrentPoint()
+    {
+        if (startPointDrag == null || currentPointDrag == null) {
+            return;
+        }
+
+        int dx = currentPointDrag.getX() - startPointDrag.getX();
+        int dy = currentPointDrag.getY() - startPointDrag.getY();
+
+        if (dx == 0 && dy == 0) {
+            return;
+        }
+
+        double length = Math.hypot(dx, dy); //sqrt(dx^2 + dy^2)
+        double angle = Math.atan2(dy, dx); //used atan2 to avoid undefined tan in pi/2
+        double snappedAngle = Math.round(angle / (Math.PI / 4.0)) * (Math.PI / 4.0); //pi/4 = 45 deg
+
+        int alignedX = startPointDrag.getX() + (int) Math.round(length * Math.cos(snappedAngle));
+        int alignedY = startPointDrag.getY() + (int) Math.round(length * Math.sin(snappedAngle));
+        if(alignedX < 0 || alignedX >= canvas.getWidth() || alignedY < 0 || alignedY >= canvas.getHeight())
+        {
+            currentPointDrag = null;
+        }
+        else
+        {
+            currentPointDrag = new Point(alignedX, alignedY);
+        }
+    }
+
+    private boolean pointOutOfBounds(Point p)
+    {
+        return p.getX() < 0 || p.getX() >= canvas.getWidth() || p.getY() < 0 || p.getY() >= canvas.getHeight();
     }
 
     public record Pair<F, S>(F first, S second) {} //std::pair copy
