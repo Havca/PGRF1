@@ -137,7 +137,6 @@ public class Controller {
                 }
                 else
                 {
-                    
                     startPointDrag = new Point(e.getX(), e.getY());
                     currentPointDrag = new Point(e.getX(), e.getY());
                 }
@@ -246,6 +245,7 @@ public class Controller {
                     currentPointDrag = null;
                     return;
                 }
+
                 if(editMode) //Edit position of a point in a polygon
                 {
                     currentPointDrag = getPoint(e);
@@ -316,11 +316,6 @@ public class Controller {
             }
         }
 
-        //Draw current preview line
-        if(startPointDrag != null)
-        {
-            raster.rasterize(new Line(startPointDrag, currentPointDrag, PREVIEW_COLOR));
-        }
         canvas.repaint();
     }
 
