@@ -11,6 +11,8 @@ public class BresenhamsAlgorithm implements LineRasterizer {
   {
     this.raster = raster;
   }
+
+  @Override
   public void rasterize(Line line) {
     
     if(line != null && line.getPoint1() != null && line.getPoint2() != null)

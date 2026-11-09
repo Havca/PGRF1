@@ -1,21 +1,20 @@
 package controller;
 
 //Object import
-import view.Canvas;
+import graphics.clipping.PolygonClipper;
+import graphics.clipping.SutherlandHodgmanClipper;
+import graphics.filler.ScanlineFiller;
 import graphics.rasterizer.LineRasterizer;
-import graphics.rasterizer.BresenhamsAlgorithm;
-//import graphics.rasterizer.TrivialLineRasterizer;
-import model.Line;
-import model.Point;
-import model.Polygon;
-
-//Library import
-import java.awt.event.*;
+import graphics.rasterizer.XiaolinWuLineRasterizer;
 import java.awt.Color;
-import java.util.ArrayList;
+import java.awt.event.*;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.SwingUtilities;
+import model.Line;
+import model.Point;
+import model.Polygon;
+import view.Canvas;
 
 
 /**
@@ -26,6 +25,20 @@ import javax.swing.SwingUtilities;
  * @version 2026
  */
 public class Controller {
+    //Colors
+    private final int LINE_COLOR = Color.WHITE.getRGB();
+    private final int PREVIEW_COLOR = Color.RED.getRGB();
+    private static final int CLIPPING_TRIANGLE_COLOR = new Color(0xE6B85C).getRGB();
+    private static final int FILL_COLOR = new Color(0x58BFA9).getRGB();
+
+    private static final List<Point> CLIPPING_POLYGON_VERTICES = List.of(
+        new Point(250, 100),
+        new Point(480, 470),
+        new Point(230, 600),
+        new Point(180, 600),
+        new Point(40, 470)
+    );
+
     //App parts variables
     private final Canvas canvas;
     private final LineRasterizer raster;
@@ -40,13 +53,15 @@ public class Controller {
     private Point currentPoint = null;
     private Point trackerPoint = null;
     private Polygon currentPolygon = new Polygon();
+    private final Polygon clippingPolygon = createPolygon(CLIPPING_POLYGON_VERTICES, CLIPPING_TRIANGLE_COLOR);
+    private boolean polygonClosed = false;
 
-    //Colors
-    private final int LINE_COLOR = Color.WHITE.getRGB();
-    private final int PREVIEW_COLOR = Color.RED.getRGB();
+    private final PolygonClipper clipper = new SutherlandHodgmanClipper();
 
-    //Data structure for polygons
-    private final List<Polygon> polygons = new ArrayList<Polygon>();
+    //private Point seedFillPoint;
+    //private boolean seedFillMode;
+    //private final SeedFiller seedFiller;
+    private final ScanlineFiller scanlineFiller;
 
     //Edit mode variables
     private boolean editMode = false;
@@ -62,7 +77,9 @@ public class Controller {
     public Controller(Canvas canvas) {
         this.canvas = canvas;
         //this.raster = new TrivialLineRasterizer(canvas.getRaster());  ORIGINAL
-        this.raster = new BresenhamsAlgorithm(canvas.getRaster());
+        this.raster = new XiaolinWuLineRasterizer(canvas.getRaster());
+        //this.seedFiller = new RecursiveSeedFiller(canvas.getRaster());
+        this.scanlineFiller = new ScanlineFiller(canvas.getRaster());
 
     }
 
@@ -71,13 +88,14 @@ public class Controller {
     public void init() {
         canvas.clear();
 
+        
+
         canvas.addKeyListener(new KeyAdapter() {
             @Override 
             public void keyPressed(KeyEvent e)
             {
                 //---------------------------Clear---------------------------
                 if(e.getKeyCode() == KeyEvent.VK_C) {
-                    polygons.clear();
                     canvas.clear();
                     canvas.repaint();
                     startPointDrag = null;
@@ -85,6 +103,7 @@ public class Controller {
                     startPoint = null;
                     currentPoint = null;
                     currentPolygon = new Polygon();
+                    render();
                 }
 
                 //---------------------------Edit Mode---------------------------
@@ -103,12 +122,6 @@ public class Controller {
                     render();
                 }
 
-                //---------------------------Remove last object---------------------------
-                if(e.getKeyCode() == KeyEvent.VK_Z) {
-                    if(polygons.isEmpty()) return;
-                    polygons.remove(polygons.size() - 1);
-                    render();
-                }
 
                 //--------------------Straight, Vertical and Diagonal line-----------------
                 if(e.getKeyCode() == KeyEvent.VK_SHIFT) {
@@ -130,8 +143,7 @@ public class Controller {
                 {
                     var overlappingPoint = checkPointsOverlapping(getPoint(e));
                     if(overlappingPoint == null) return;
-                    selectedPolygon = overlappingPoint.first();
-                    Point selectedPoint = overlappingPoint.second();
+                    Point selectedPoint = overlappingPoint;
                     var selectedPolygonsPoints = selectedPolygon.getPoints();
                     indexOfEditedPoint = selectedPolygonsPoints.indexOf(selectedPoint);
                 }
@@ -157,10 +169,10 @@ public class Controller {
                     selectedPolygon = null;
                     indexOfEditedPoint = -1;
                 }
-                else if(startPointDrag == null || currentPointDrag == null)
-                {
-                    return;
-                }
+                //else if(startPointDrag == null || currentPointDrag == null)
+                //{
+                //    return;
+                //}
                 else if(lineDrag)
                 {
                     Polygon p = new Polygon();
@@ -174,7 +186,7 @@ public class Controller {
                         p.addPoint(getPoint(e));
                     }
                     
-                    polygons.add(p);
+                    //polygons.add(p);
                     currentPointDrag = null;
                     startPointDrag = null;
                     lineDrag = false;
@@ -194,11 +206,10 @@ public class Controller {
                     {
                         var overlappingPoint = checkPointsOverlapping(getPoint(e));
                         if(overlappingPoint == null) return;
-                        selectedPolygon = overlappingPoint.first();
-                        Point selectedPoint = overlappingPoint.second();
+                        Point selectedPoint = overlappingPoint;
                         var selectedPolygonsPoints = selectedPolygon.getPoints();
                         indexOfEditedPoint = selectedPolygonsPoints.indexOf(selectedPoint);
-                        if(selectedPolygon != null && indexOfEditedPoint != -1)
+                        if(indexOfEditedPoint != -1)
                         {
                             selectedPolygon.getPoints().remove(indexOfEditedPoint);
                             
@@ -208,7 +219,7 @@ public class Controller {
                 }
                 else
                 {    
-                    
+                    if(polygonClosed) return;
                     if(startPoint == null) //Adding points to polygon
                     {
                         startPoint = getPoint(e);
@@ -222,12 +233,14 @@ public class Controller {
                         {
                             currentPoint = null;
                             startPoint = null;
-                            polygons.add(currentPolygon);
-                            currentPolygon = new Polygon();
+                            polygonClosed = true;
+                            currentPolygon.connectLastPointToFirst();
+                            //currentPolygon.addLine(new Line(currentPolygon.getPoints().get(currentPolygon.getPoints().size() - 1), currentPolygon.getPoints().get(0), LINE_COLOR));
                         }
                         else //Continue adding points
                         {
                             currentPolygon.addPoint(currentPoint);
+                            //currentPolygon.addLine(new Line(currentPolygon.getPoints().get(currentPolygon.getPoints().size() - 2), currentPoint, LINE_COLOR));
                         }
                         render();
                     }
@@ -276,8 +289,12 @@ public class Controller {
                 render();
                 if(editMode) return;
                 trackerPoint = getPoint(e);
-                raster.rasterize(new Line(currentPoint, trackerPoint, PREVIEW_COLOR));
-                raster.rasterize(new Line(trackerPoint, startPoint, PREVIEW_COLOR));
+                if(startPoint != null && trackerPoint != null && trackerPoint != null)
+                {
+                    raster.rasterize(new Line(currentPoint, trackerPoint, PREVIEW_COLOR));
+                    raster.rasterize(new Line(trackerPoint, startPoint, PREVIEW_COLOR));
+                }
+                
                 canvas.repaint();
             }
         });
@@ -294,28 +311,35 @@ public class Controller {
     private void render() {
         canvas.clear();
 
+        for(Line l : clippingPolygon.getLines())
+        {
+            raster.rasterize(l);
+        }
         //Draw all closed polygons
-        for(Polygon p : polygons)
+        for(Line l : currentPolygon.getLines())
         {
-            ArrayList<Point> points = p.getPoints();
-            int size = points.size();
-            for(int i = 0; i < size; i++)
-            {
-                raster.rasterize(new Line(points.get(i), points.get((i+1) % size), LINE_COLOR));
-            }
+            raster.rasterize(l);
         }
 
-        //Draw current open polygon
-        if(currentPolygon.getPoints().size() > 1)
-        {
-            ArrayList<Point> points = currentPolygon.getPoints();
-            int size = points.size();
-            for(int i = 0; i < size - 1; i++)
-            {
-                raster.rasterize(new Line(points.get(i), points.get((i+1) % size) , LINE_COLOR));
-            }
+        Polygon subject = withPreviewLine();
+        
+        Polygon clipped;
+        try {
+            clipped = clipper.clip(subject, clippingPolygon);
+        } catch (UnsupportedOperationException unfinishedClipper) {
+            clipped = null;
         }
 
+        if(clipped != null) {
+            scanlineFiller.fill(clipped, FILL_COLOR);
+        }
+
+
+
+            /*Polygon p = currentPolygon;
+            System.out.println("Points: " + p.getPoints());
+            System.out.println("Lines: " + p.getLines());
+            System.out.println("Color: " + Integer.toHexString(p.getColor()));*/
         canvas.repaint();
     }
 
@@ -327,18 +351,17 @@ public class Controller {
     }
     
     //----------------------------Point overlapping detection for polygons----------------------------
-    private Pair<Polygon, Point> checkPointsOverlapping(Point p)
+    private Point checkPointsOverlapping(Point p)
     {
-        for(Polygon pol : polygons)
-        {
-            for(Point polP : pol.getPoints())
+        
+            for(Point polP : currentPolygon.getPoints())
             {
                 if(pointsOverlapping(polP, p))
                 {
-                    return new Pair<Polygon, Point>(pol, polP);
+                    return polP;
                 }
             }
-        }
+        
         return null;
     }
 
@@ -375,6 +398,32 @@ public class Controller {
     private boolean pointOutOfBounds(Point p)
     {
         return p.getX() < 0 || p.getX() >= canvas.getWidth() || p.getY() < 0 || p.getY() >= canvas.getHeight();
+    }
+
+    private Polygon createPolygon(List<? extends Point> vertices, int color) {
+        Polygon result = new Polygon();
+        result.setColor(color);
+        for(Point v : vertices)
+        {
+            result.addPoint(v);
+        }
+        result.connectLastPointToFirst();
+        return result;
+    }
+
+    private Polygon withPreviewLine() {
+        
+        Polygon result = new Polygon();
+        for (Point p : currentPolygon.getPoints()) {
+            result.addPoint(p);
+        }
+        if(startPoint != null)
+        {
+            result.addPoint(trackerPoint);
+        }
+        
+        result.connectLastPointToFirst();
+        return result;
     }
 
     public record Pair<F, S>(F first, S second) {} //std::pair copy

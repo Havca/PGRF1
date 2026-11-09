@@ -9,6 +9,8 @@ public interface Raster {
 
   void setPixel(int x, int y, int color);
 
+  Integer getPixel(int x, int y);
+
   int getHeight();
 
   int getWidth();

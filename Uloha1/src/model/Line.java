@@ -2,9 +2,9 @@ package model;
 
 
 public class Line {
-  private Point point1;
-  private Point point2;
-  private int color;
+  private final Point point1;
+  private final Point point2;
+  private final int color;
 
   public Line(Point point1, Point point2, int color) {
     this.point1 = point1;
@@ -22,5 +22,10 @@ public class Line {
 
   public int getColor() {
     return color;
+  }
+
+  @Override 
+  public String toString() {
+    return "Line{" + "point1=" + point1 + ", point2=" + point2 + ", color=" + Integer.toHexString(color) + '}';
   }
 }
