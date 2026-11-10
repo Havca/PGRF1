@@ -26,8 +26,26 @@ public class Polygon {
     }
   }
 
+  public boolean deletePoint(Point point)
+  {
+    int index = points.indexOf(point);
+    if(index == -1) return false;
+    points.remove(index);
+    recreateLinesFromPoints();
+    return true;
+  }
+
+  public boolean changePoint(int index, Point newPoint)
+  {
+    if(index == -1) return false;
+    points.set(index, newPoint);
+    recreateLinesFromPoints();
+    return true;
+  }
+
   public void clearPoints() {
     points.clear();
+    lines.clear();
   }
 
   public void addLine(Line line) {
@@ -47,6 +65,20 @@ public class Polygon {
 
   public int getColor() {
     return color;
+  }
+
+  public Point getLast()
+  {
+    return points.getLast();
+  }
+
+  private void recreateLinesFromPoints()
+  {
+    lines.clear();
+    for(int i = 0; i < points.size(); i++)
+    {
+      lines.add(new Line(points.get(i), points.get((i+1) % points.size()), color));
+    }
   }
 
   @Override 

@@ -1,7 +1,8 @@
 package view;
 
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
+import view.gui.Toolbar;
 
 /**
  * Represents the main application window that displays the {@link Canvas}.
@@ -13,17 +14,20 @@ import java.awt.*;
 public class Window extends JFrame {
 
     private final Canvas canvas;
+    private final Toolbar toolbar;
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
     public Window(int width, int height) {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setTitle("FIM UHK | PGRF1 | 2026 | Havelka");
+        setTitle("FIM UHK | PGRF1 | 2026 | Ondrej Havelka");
         setLayout(new BorderLayout());
         setResizable(false);
 
+        toolbar = new Toolbar();
         canvas = new Canvas(width, height);
-        add(canvas);
+        add(toolbar, BorderLayout.NORTH);
+        add(canvas, BorderLayout.CENTER);
         pack();
 
         setLocationRelativeTo(null);
@@ -36,6 +40,10 @@ public class Window extends JFrame {
 
     public Canvas getCanvas() {
         return canvas;
+    }
+
+    public Toolbar getToolbar() {
+        return toolbar;
     }
 
 }
