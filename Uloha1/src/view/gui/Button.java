@@ -7,7 +7,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.RenderingHints;
-
 import javax.swing.Icon;
 import javax.swing.JButton;
 
@@ -19,13 +18,13 @@ public final class Button extends JButton {
     private static final Color NORMAL = new Color(0xC94F58);
     private static final Color PRESSED = new Color(0x9E3942);
     private static final Color OUTLINE = new Color(0xDB6B72);
-    private static final Color NEUTRAL = new Color(0x34393F);
-    private static final Color NEUTRAL_HOVER = new Color(0x41474E);
+    static final Color NEUTRAL = new Color(0x34393F);
+    static final Color NEUTRAL_HOVER = new Color(0x41474E);
     private static final Color HOVER_OUTLINE = new Color(0xC04A53);
     private static final Color PRESSED_OUTLINE = new Color(0x87313A);
     private static final Color NEUTRAL_PRESSED = new Color(0x2D3237);
-    private static final Color NEUTRAL_OUTLINE = new Color(0x4B535B);
-    private static final Color NEUTRAL_HOVER_OUTLINE = new Color(0x626B75);
+    static final Color NEUTRAL_OUTLINE = new Color(0x4B535B);
+    static final Color NEUTRAL_HOVER_OUTLINE = new Color(0x626B75);
     private static final Color NEUTRAL_PRESSED_OUTLINE = new Color(0x3B4249);
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */

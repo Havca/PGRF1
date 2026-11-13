@@ -5,16 +5,19 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
-
 import javax.swing.BorderFactory;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
-
 import view.gui.icons.TrashIcon;
 
 public final class Toolbar extends JPanel {
 
     private final Button clearButton;
     private final Button seedFillButton;
+    private final Button patternControlButton;
+    private final JComboBox<String> fillColorComboBox;
+    private final JComboBox<String> patternComboBox;
 
     private static final Color DIVIDER = new Color(0x3A3E43);
     private static final Color BACKGROUND = new Color(0x25282C);
@@ -28,10 +31,24 @@ public final class Toolbar extends JPanel {
             BorderFactory.createEmptyBorder(10, 6, 4, 6)
         ));
 
-        JPanel fillControls = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        JPanel fillControls = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         seedFillButton = new Button("Seed fill", false);
+        patternControlButton = new Button("Pattern: OFF", false);
+        fillColorComboBox = new StyledComboBox(new String[] {"Teal", "Red", "Yellow", "Black", "White"}, 135);
+        patternComboBox = new StyledComboBox(new String[] {"Smiley", "Creeper", "Heart"}, 135);
+        JLabel fillColorLabel = new JLabel("Fill:");
+        JLabel patternLabel = new JLabel("Pattern:");
+        fillColorLabel.setForeground(Color.WHITE);
+        patternLabel.setForeground(Color.WHITE);
+        fillColorComboBox.setToolTipText("Fill color");
+        patternComboBox.setToolTipText("Fill pattern");
         fillControls.setOpaque(false);
         fillControls.add(seedFillButton);
+        fillControls.add(fillColorLabel);
+        fillControls.add(fillColorComboBox);
+        fillControls.add(patternControlButton);
+        fillControls.add(patternLabel);
+        fillControls.add(patternComboBox);
         add(fillControls, BorderLayout.WEST);
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
@@ -58,6 +75,32 @@ public final class Toolbar extends JPanel {
 
     public void addSeedFillListener(ActionListener listener) {
         seedFillButton.addActionListener(listener);
+    }
+
+    public String getSelectedFillColor() {
+        return (String) fillColorComboBox.getSelectedItem();
+    }
+
+    public void addFillColorListener(ActionListener listener) {
+        fillColorComboBox.addActionListener(listener);
+    }
+
+    public void setPatternMode(boolean active)
+    {
+        patternControlButton.setText(active ? "Pattern: ON" : "Pattern: OFF");
+    }
+
+    public void addPatternModeListener(ActionListener listener)
+    {
+        patternControlButton.addActionListener(listener);
+    }
+
+    public String getSelectedPattern() {
+        return (String) patternComboBox.getSelectedItem();
+    }
+
+    public void addPatternSelectionListener(ActionListener listener) {
+        patternComboBox.addActionListener(listener);
     }
 
 }

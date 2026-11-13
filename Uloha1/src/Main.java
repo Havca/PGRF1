@@ -1,11 +1,10 @@
 import controller.Controller;
+import javax.swing.SwingUtilities;
+import static javax.swing.SwingUtilities.invokeLater;
 import view.Window;
 
-import javax.swing.SwingUtilities;
-
-import static javax.swing.SwingUtilities.invokeLater;
-
 /**
+ * 
  * Application entry point.
  * Initializes and displays the raster canvas using {@link SwingUtilities#invokeLater(Runnable)}.
  *

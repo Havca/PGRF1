@@ -17,6 +17,7 @@ import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import model.Line;
+import model.Pattern;
 import model.Point;
 import model.Polygon;
 import view.Canvas;
@@ -37,6 +38,12 @@ public class Controller {
     private final int PREVIEW_COLOR = Color.RED.getRGB();
     private static final int CLIPPING_TRIANGLE_COLOR = new Color(0xE6B85C).getRGB();
     private static final int FILL_COLOR = new Color(0x58BFA9).getRGB();
+    private static final int LIGHT_BLUE = new Color(0x00A8E8).getRGB();
+    private static final int DARK_BLUE  = new Color(0x1C3A5A).getRGB();
+    private static final int WHITE = Color.WHITE.getRGB();
+    private static final int RED = Color.RED.getRGB();
+    private static final int YELLOW = Color.YELLOW.getRGB();
+    private static final int BLACK = Color.BLACK.getRGB();
 
     private static final List<Point> CLIPPING_POLYGON_VERTICES = List.of(
         new Point(250, 100),
@@ -45,6 +52,75 @@ public class Controller {
         new Point(180, 600),
         new Point(40, 470)
     );
+
+    
+
+    private static final List<List<Integer>> PATTERN_CREEPER_LARGE = List.of(
+        // Row 1 (Scaled to 2 rows)
+        List.of(LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE),
+        List.of(LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE),
+        
+        // Row 2 (Scaled to 2 rows)
+        List.of(LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, DARK_BLUE,  DARK_BLUE,  LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE),
+        List.of(LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, DARK_BLUE,  DARK_BLUE,  LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE),
+        
+        // Row 3 (Scaled to 2 rows)
+        List.of(LIGHT_BLUE, LIGHT_BLUE, DARK_BLUE,  DARK_BLUE,  DARK_BLUE,  DARK_BLUE,  DARK_BLUE,  DARK_BLUE,  LIGHT_BLUE, LIGHT_BLUE),
+        List.of(LIGHT_BLUE, LIGHT_BLUE, DARK_BLUE,  DARK_BLUE,  DARK_BLUE,  DARK_BLUE,  DARK_BLUE,  DARK_BLUE,  LIGHT_BLUE, LIGHT_BLUE),
+        
+        // Row 4 (Scaled to 2 rows)
+        List.of(LIGHT_BLUE, LIGHT_BLUE, DARK_BLUE,  DARK_BLUE,  LIGHT_BLUE, LIGHT_BLUE, DARK_BLUE,  DARK_BLUE,  LIGHT_BLUE, LIGHT_BLUE),
+        List.of(LIGHT_BLUE, LIGHT_BLUE, DARK_BLUE,  DARK_BLUE,  LIGHT_BLUE, LIGHT_BLUE, DARK_BLUE,  DARK_BLUE,  LIGHT_BLUE, LIGHT_BLUE),
+        
+        // Row 5 (Scaled to 2 rows)
+        List.of(LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE),
+        List.of(LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE, LIGHT_BLUE)
+    );  
+
+    private static final Pattern pRocketShip = new Pattern(PATTERN_CREEPER_LARGE);
+
+    private static final List<List<Integer>> PATTERN_HEART_LARGE = List.of(
+    List.of(WHITE, WHITE, RED,   RED,   WHITE, WHITE, RED,   RED,   WHITE, WHITE),
+    List.of(WHITE, WHITE, RED,   RED,   WHITE, WHITE, RED,   RED,   WHITE, WHITE),
+    
+    List.of(RED,   RED,   RED,   RED,   RED,   RED,   RED,   RED,   RED,   RED),
+    List.of(RED,   RED,   RED,   RED,   RED,   RED,   RED,   RED,   RED,   RED),
+    
+    List.of(RED,   RED,   RED,   RED,   RED,   RED,   RED,   RED,   RED,   RED),
+    List.of(RED,   RED,   RED,   RED,   RED,   RED,   RED,   RED,   RED,   RED),
+    
+    List.of(WHITE, WHITE, RED,   RED,   RED,   RED,   RED,   RED,   WHITE, WHITE),
+    List.of(WHITE, WHITE, RED,   RED,   RED,   RED,   RED,   RED,   WHITE, WHITE),
+    
+    List.of(WHITE, WHITE, WHITE, WHITE, RED,   RED,   WHITE, WHITE, WHITE, WHITE),
+    List.of(WHITE, WHITE, WHITE, WHITE, RED,   RED,   WHITE, WHITE, WHITE, WHITE)
+);
+private static final Pattern pHeartLarge = new Pattern(PATTERN_HEART_LARGE);
+
+private static final List<List<Integer>> PATTERN_SMILEY_LARGE = List.of(
+    List.of(YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW),
+    List.of(YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW),
+
+    List.of(YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW),
+    List.of(YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW),
+    
+    List.of(YELLOW, YELLOW, YELLOW, YELLOW, BLACK,  BLACK,  YELLOW, YELLOW, BLACK,  BLACK,  YELLOW, YELLOW, YELLOW, YELLOW),
+    List.of(YELLOW, YELLOW, YELLOW, YELLOW, BLACK,  BLACK,  YELLOW, YELLOW, BLACK,  BLACK,  YELLOW, YELLOW, YELLOW, YELLOW),
+    
+    List.of(YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW),
+    List.of(YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW),
+    
+    List.of(YELLOW, YELLOW, BLACK,  BLACK,  YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, BLACK,  BLACK, YELLOW, YELLOW),
+    List.of(YELLOW, YELLOW, BLACK,  BLACK,  YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, BLACK,  BLACK, YELLOW, YELLOW),
+    
+    List.of(YELLOW, YELLOW, YELLOW, YELLOW, BLACK,  BLACK,  BLACK,  BLACK,  BLACK,  BLACK,  YELLOW, YELLOW, YELLOW, YELLOW),
+    List.of(YELLOW, YELLOW, YELLOW, YELLOW, BLACK,  BLACK,  BLACK,  BLACK,  BLACK,  BLACK,  YELLOW, YELLOW, YELLOW, YELLOW),
+
+    List.of(YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW),
+    List.of(YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW)
+);
+private static final Pattern pSmileyLarge = new Pattern(PATTERN_SMILEY_LARGE);
+    
 
     //App parts variables
     private final Canvas canvas;
@@ -68,9 +144,8 @@ public class Controller {
 
     //Edit mode variables
     private boolean editMode = false;
-    //private Point selectedPoint = null;
+    private Polygon selectedPolygon = null;
     private int indexOfEditedPoint = -1;
-    //private Polygon selectedPolygon = null;
 
     //Align mode variables
     private boolean alignMode = false;
@@ -79,6 +154,9 @@ public class Controller {
     private final SeedFiller seedFiller;
     private Point seedFillPoint;
     private boolean seedFillMode;
+    private boolean patternMode = false;
+    private Pattern selectedPattern = pSmileyLarge;
+    private int fillColor = FILL_COLOR;
 
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
@@ -86,12 +164,9 @@ public class Controller {
     public Controller(Canvas canvas, Toolbar toolbar) {
         this.canvas = canvas;
         this.toolbar = toolbar;
-        //this.raster = new TrivialLineRasterizer(canvas.getRaster());  ORIGINAL
         this.raster = new XiaolinWuLineRasterizer(canvas.getRaster());
-        //this.seedFiller = new RecursiveSeedFiller(canvas.getRaster());
         this.scanlineFiller = new ScanlineFiller(canvas.getRaster());
         this.seedFiller = new RecursiveSeedFiller(canvas.getRaster());
-
     }
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Main functions -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
@@ -100,6 +175,27 @@ public class Controller {
         canvas.clear();
         toolbar.addClearListener(_ -> clearDrawing());
         toolbar.addSeedFillListener(_ -> toggleSeedFillMode());
+        toolbar.addPatternModeListener(_ -> togglePatternMode());
+        toolbar.addFillColorListener(_ -> {
+            fillColor = switch (toolbar.getSelectedFillColor()) {
+                case "Red" -> RED;
+                case "Yellow" -> YELLOW;
+                case "Black" -> BLACK;
+                case "White" -> WHITE;
+                default -> FILL_COLOR;
+            };
+            render();
+        });
+        toolbar.addPatternSelectionListener(_ -> {
+            selectedPattern = switch (toolbar.getSelectedPattern()) {
+                case "Creeper" -> pRocketShip;
+                case "Heart" -> pHeartLarge;
+                default -> pSmileyLarge;
+            };
+            render();
+        });
+
+        
 
         //----------------------------Clear-------------------------------
         canvas.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
@@ -118,7 +214,6 @@ public class Controller {
             @Override
             public void actionPerformed(ActionEvent e) {
                 alignMode = !alignMode;
-                System.out.println("toggle");
                 alignCurrentPoint();
                 render();
             }
@@ -130,7 +225,6 @@ public class Controller {
         canvas.getActionMap().put("toggleEditMode", new AbstractAction() {
            @Override
            public void actionPerformed(ActionEvent e) {
-            System.out.println("editmode");
                 editMode = !editMode;
                 trackerPoint = null;
                 if (editMode) { //AI
@@ -156,8 +250,17 @@ public class Controller {
                 {
                     var overlappingPoint = checkPointsOverlapping(getPoint(e));
                     if(overlappingPoint == null) return;
-                    indexOfEditedPoint = currentPolygon.getPoints().indexOf(overlappingPoint);
-                    System.out.println("SelectedPoint: " + overlappingPoint);
+                    if(currentPolygon.getPoints().contains(overlappingPoint))
+                    {
+                        indexOfEditedPoint = currentPolygon.getPoints().indexOf(overlappingPoint);
+                        selectedPolygon = currentPolygon;
+                    }
+                    else
+                    {
+                        indexOfEditedPoint= clippingPolygon.getPoints().indexOf(overlappingPoint);
+                        selectedPolygon = clippingPolygon;
+                    }
+
                 }
                 else
                 {
@@ -188,6 +291,7 @@ public class Controller {
                 if(editMode)
                 {
                     indexOfEditedPoint = -1;
+                    selectedPolygon = null;
                 }
                 else if(lineDrag)
                 {
@@ -272,7 +376,15 @@ public class Controller {
                     currentPointDrag = getPoint(e);
                     if(currentPolygon != null && indexOfEditedPoint != -1)
                     {
-                        currentPolygon.changePoint(indexOfEditedPoint, currentPointDrag);
+                        if(selectedPolygon == currentPolygon)
+                        {
+                            currentPolygon.changePoint(indexOfEditedPoint, currentPointDrag);
+                        }
+                        else
+                        {
+                            clippingPolygon.changePoint(indexOfEditedPoint, currentPointDrag);
+                        }
+                        
                         render();
                     }
                 }
@@ -330,11 +442,12 @@ public class Controller {
         {
             raster.rasterize(l);
         }
-        //Draw all closed polygons
+
         for(Line l : currentPolygon.getLines())
         {
             raster.rasterize(l);
         }
+
 
         Polygon subject = withPreviewLine();
         
@@ -346,13 +459,40 @@ public class Controller {
         }
 
         if(clipped != null) {
-            scanlineFiller.fill(clipped, FILL_COLOR);
+            if(patternMode)
+            {
+                scanlineFiller.fill(clipped, selectedPattern);
+            }
+            else
+            {
+                scanlineFiller.fill(clipped, fillColor);
+            }
+
+            
         }
-        
+
         if(seedFillPoint != null)
         {
-            seedFiller.fill(seedFillPoint.getX(), seedFillPoint.getY(), canvas.getBackgroundColor(), FILL_COLOR);
+            if(patternMode)
+            {   
+                seedFiller.fill(seedFillPoint.getX(), seedFillPoint.getY(), canvas.getBackgroundColor(), LINE_COLOR, selectedPattern);
+            }
+            else
+            {
+                seedFiller.fill(seedFillPoint.getX(), seedFillPoint.getY(), canvas.getBackgroundColor(), fillColor, LINE_COLOR);
+            }
         }
+
+        for(Line l : clippingPolygon.getLines())
+        {
+            raster.rasterize(l);
+        }
+
+        for(Line l : currentPolygon.getLines())
+        {
+            raster.rasterize(l);
+        }
+
         canvas.repaint();
     }
 
@@ -368,6 +508,14 @@ public class Controller {
     {
         
             for(Point polP : currentPolygon.getPoints())
+            {
+                if(pointsOverlapping(polP, p))
+                {
+                    return polP;
+                }
+            }
+
+            for(Point polP : clippingPolygon.getPoints())
             {
                 if(pointsOverlapping(polP, p))
                 {
@@ -491,16 +639,31 @@ public class Controller {
         render();
     }
 
+    private void togglePatternMode() {
+        patternMode = !patternMode;
+        toolbar.setPatternMode(patternMode);
+        render();
+    }
+
     private void fillAt(MouseEvent event) {
         Point seed = getPoint(event);
         Integer seedColor = canvas.getRaster().getPixel(seed.getX(), seed.getY());
-        if (seedFillPoint != null && seedColor != null && seedColor == FILL_COLOR) {
+        if (seedFillPoint != null && seedColor != null && seedColor == fillColor) {
             seedFillPoint = null;
             render();
             return;
         }
 
-        boolean filled = seedFiller.fill(seed.getX(), seed.getY(), canvas.getBackgroundColor(), FILL_COLOR);
+        boolean filled;
+        if(patternMode)
+        {
+            filled = seedFiller.fill(seed.getX(), seed.getY(), canvas.getBackgroundColor(), LINE_COLOR, selectedPattern);
+        }
+        else
+        {   
+            filled = seedFiller.fill(seed.getX(), seed.getY(), canvas.getBackgroundColor(), fillColor, LINE_COLOR);
+        }
+        
         if (filled) {
             seedFillPoint = seed;
             render();

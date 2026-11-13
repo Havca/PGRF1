@@ -53,7 +53,6 @@ public final class SutherlandHodgmanClipper implements PolygonClipper {
 
         //  7: Pomocí metody toPolygon() převeďte výsledný seznam vrcholů zpět na Polygon a zachovejte barvu původních hran.
         return toPolygon(subjectVertices, subjectEdges.get(0).getColor());
-        //throw new UnsupportedOperationException("TODO: clip");
     }
 
     /**
@@ -80,7 +79,6 @@ public final class SutherlandHodgmanClipper implements PolygonClipper {
             return true;
         }
         return false;
-        //throw new UnsupportedOperationException("TODO: isInside");
     }
 
     /**
@@ -113,7 +111,6 @@ public final class SutherlandHodgmanClipper implements PolygonClipper {
 
         //  4: Vypočtené souřadnice zaokrouhlete pomocí Math.round() na celá čísla a vraťte nový objekt Point.
         return new Point(x, y);
-        //throw new UnsupportedOperationException("TODO: intersection");
     }
 
     /**
@@ -166,7 +163,6 @@ public final class SutherlandHodgmanClipper implements PolygonClipper {
 
         //  6: Vraťte seznam výsledných vrcholů.
         return resultPoints;
-        //throw new UnsupportedOperationException("TODO: clipEdge");
     }
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Utilities -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
